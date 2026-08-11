@@ -1,0 +1,44 @@
+# Environment variables & secrets (CRITICAL)
+.env
+.env.local
+.env.*.local
+
+# Database & SQLite files
+*.db
+*.sqlite
+*.sqlite3
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.nox/
+.tox/
+
+# Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+env.bak/
+venv.bak/
+
+# Uploads & Temporary files
+uploads/*
+!uploads/.gitkeep
+sample_files/
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Vercel deployment cache
+.vercel
