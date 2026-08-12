@@ -1,87 +1,77 @@
 # FinBank AI — Financial Document Intelligence Agent
 
-**FinBank AI** is a lightweight, production-quality financial document analysis agent built to automate banking and financial operations by extracting, normalizing, and analyzing bank statements (PDF, CSV, XLSX).
+**FinBank AI** is a lightweight, production-quality **Autonomous Financial Intelligence Agent** built to automate banking and financial operations by extracting, normalizing, auditing, and simulating bank statement data (PDF, CSV, XLSX).
 
-It features a **Hybrid AI Architecture** combining deterministic rule engines, statistical analytics, and **NVIDIA Nemotron LLM** to deliver explainable transaction categorization, anomaly detection, stability assessments, interactive AI chat, and exportable PDF reports.
+Unlike simple LLM wrappers that merely generate text responses from raw prompts, **FinBank AI operates as a true AI Agent**. It uses a **ReAct (Reasoning + Action) Tool-Calling Engine**, executes deterministic backend Python tools server-side, exposes a step-by-step **Execution Trace**, performs **Autonomous Financial Audits**, and runs **"What-If" Scenario Simulations**.
 
 ---
 
-## 🌟 7 Core Features
+## 🌟 Core AI Agent Capabilities
 
-1. **Financial Document Upload & Extraction**:
+1. **ReAct Tool-Calling Engine & Verifiable Execution Trace**:
+   - Decomposes complex financial queries into structured multi-step goals (`PLAN`, `TOOL_CALL`, `VERIFICATION`, `SYNTHESIS`).
+   - Server-side tool execution (`tool_query_financial_metrics`, `tool_audit_recurring_subscriptions`, `tool_detect_anomalies`, `tool_simulate_budget_scenario`).
+   - Every agent interaction includes a visual **Execution Trace** accordion in the UI showing tool calls, inputs, outputs, and verification steps to guarantee zero numerical hallucinations.
+
+2. **Autonomous Financial Leak Audit Engine**:
+   - One-click autonomous audit scanning across transactions, expense ratios, subscription traps, and statistical spikes.
+   - Calculates an overall **Audit Score** (0–100) and **Risk Rating** (Low, Medium, High, Critical).
+   - Generates a prioritized list of financial leaks with monthly outflow costs and an actionable corrective plan.
+
+3. **"What-If" Goal & Scenario Simulator**:
+   - Interactive agent simulator for key financial decisions:
+     - 🎯 **Emergency Fund Builder**: Calculates required monthly savings, proposes 20–25% category spend cuts, and stress-tests against historical lowest income months.
+     - 🏦 **Loan EMI Affordability Test**: Evaluates loan EMI impact against debt capacity caps and monthly cash flow buffers.
+     - ✂️ **Expense Reduction Strategy**: Identifies flexible discretionary categories (Food & Dining, Shopping, Entertainment) and calculates achievable monthly savings.
+
+4. **Financial Document Upload & Extraction**:
    - Multi-format support: PDF bank statements, CSV, and Excel XLSX files.
    - Modular parsers with automatic column detection (Date, Narration, Debit, Credit, Amount, Balance, Reference).
    - Scanned PDF support via open-source OCR fallback (`pytesseract`).
-   - Standard transaction schema normalization.
 
-2. **Automatic Transaction Categorization**:
-   - Hybrid approach: Keyword/Regex Merchant Normalizer first.
+5. **Hybrid Transaction Categorization**:
+   - Keyword/Regex Merchant Normalizer first.
    - NVIDIA Nemotron LLM fallback for ambiguous transactions (`confidence < 0.70`).
-   - Every transaction tracks `category`, `confidence`, and `categorization_method` (`rule`, `nemotron`, `manual`).
-   - Interactive manual category override capability.
+   - Tracks `category`, `confidence`, and `categorization_method` (`rule`, `nemotron`, `manual`).
 
-3. **Financial Dashboard & Analytics**:
+6. **Financial Dashboard & Analytics**:
    - Real-time financial KPIs: Total Income, Total Expenses, Net Cash Flow, Transaction Count, Average Transaction Value, Savings Rate, Expense-to-Income Ratio.
    - Minimalist charts: Income vs Expenses over time, Top Spending Categories.
 
-4. **Financial Insights & Anomaly Detection**:
-   - Statistical detection of unusually large expenses (> 2.5 std dev).
-   - Category spending spikes (month-over-month % jumps).
-   - Detected recurring financial commitments (rent, utilities, subscriptions).
-   - Negative cash flow periods and potential duplicate transactions.
-
-5. **AI Financial Assistant**:
-   - Grounded Q&A chat interface using structured financial context constructed by backend logic.
-   - Deterministic numerical calculations in Python backend — zero numerical hallucinations by LLM.
-
-6. **Loan / Financial Assessment Summary**:
-   - Evaluates income consistency, cash-flow stability, and recurring commitment ratios.
-   - Financial Stability Rating: **Good**, **Moderate**, or **Needs Attention** with clear summary explanations.
-   - Explicit disclaimer: *AI-assisted financial analysis — not a lending decision.*
-
 7. **Exportable PDF Financial Report**:
    - Professional PDF report generated using `ReportLab`.
-   - Includes executive summary, metric breakdowns, category distribution, detected anomalies, recurring commitments, and assessment.
+   - Includes executive summary, metric breakdowns, category distribution, detected anomalies, recurring commitments, and financial health rating.
 
 ---
 
-## 🏗️ Architecture & Data Pipeline
+## 🏗️ Autonomous Agent Architecture
 
 ```text
-                    ┌────────────────────┐
-                    │   User Uploads     │
-                    │ PDF / CSV / XLSX   │
-                    └─────────┬──────────┘
-                              ↓
-                    ┌────────────────────┐
-                    │ Document Processor │
-                    │ Parsers + OCR      │
-                    └─────────┬──────────┘
-                              ↓
-                    ┌────────────────────┐
-                    │ Normalization      │
-                    │ & Validation       │
-                    └─────────┬──────────┘
-                              ↓
-                    ┌────────────────────┐
-                    │ SQLite Database    │
-                    └─────────┬──────────┘
-                              ↓
-                 ┌────────────┴────────────┐
-                 ↓                         ↓
-       ┌──────────────────┐      ┌──────────────────┐
-       │ Rules / Stats    │      │ NVIDIA Nemotron  │
-       │ Engine           │      │ LLM Service      │
-       └────────┬─────────┘      └────────┬─────────┘
-                └────────────┬────────────┘
-                             ↓
-                  ┌──────────────────────┐
-                  │ Financial Analytics  │
-                  └──────────┬───────────┘
-                             ↓
-              ┌──────────────┼──────────────┐
-              ↓              ↓              ↓
-          Dashboard      AI Assistant    PDF Report
+                    ┌────────────────────────────┐
+                    │      User Goal / Query     │
+                    └─────────────┬──────────────┘
+                                  ↓
+                    ┌────────────────────────────┐
+                    │    ReAct Agent Engine      │
+                    │   (Plan -> Tool -> Verify) │
+                    └─────────────┬──────────────┘
+                                  ↓
+      ┌───────────────────────────┼───────────────────────────┐
+      ↓                           ↓                           ↓
+┌───────────┐               ┌───────────┐               ┌───────────┐
+│ Analytics │               │  Anomaly  │               │ Scenario  │
+│ Tool      │               │ Audit Tool│               │ Simulator │
+└─────┬─────┘               └─────┬─────┘               └─────┬─────┘
+      └───────────────────────────┼───────────────────────────┘
+                                  ↓
+                    ┌────────────────────────────┐
+                    │ Numerical Verification &   │
+                    │ LLM Synthesis (Nemotron)   │
+                    └─────────────┬──────────────┘
+                                  ↓
+                    ┌────────────────────────────┐
+                    │ Response + Execution Trace │
+                    └────────────────────────────┘
 ```
 
 ---
@@ -89,9 +79,10 @@ It features a **Hybrid AI Architecture** combining deterministic rule engines, s
 ## 🛠️ Tech Stack
 
 - **Backend**: Python 3.12, FastAPI, SQLAlchemy, Pydantic
+- **AI Agent Engine**: Custom ReAct Tool-Calling Engine, Execution Trace Generator
+- **LLM Integration**: NVIDIA Nemotron API (`httpx`)
 - **Data Processing**: Pandas, OpenPyXL, PyMuPDF (Fitz), pdfplumber, pytesseract
 - **Reporting**: ReportLab
-- **LLM**: NVIDIA Nemotron API (`httpx`)
 - **Database**: SQLite (SQLAlchemy models configurable for PostgreSQL)
 - **Frontend**: Single-Page Application (HTML5, Tailwind CSS, Chart.js, Lucide Icons)
 
@@ -109,7 +100,7 @@ DATABASE_URL=sqlite:///./finbank.db
 UPLOAD_DIR=./uploads
 ```
 
-*Note: If `NVIDIA_API_KEY` is not provided, FinBank AI operates seamlessly in **Deterministic Rule Mode** without crashing.*
+*Note: If `NVIDIA_API_KEY` is not provided, FinBank AI operates seamlessly in **Deterministic Rule & Agent Mode** without crashing.*
 
 ---
 
@@ -135,24 +126,19 @@ UPLOAD_DIR=./uploads
 
 ---
 
-## 🐳 Hugging Face Spaces Deployment
+## 🧪 Running Tests
 
-FinBank AI is ready for one-click deployment to Hugging Face Spaces using the Docker runtime:
+Run the unit test suite covering parsers, categorization, analytics, guardrails, and the ReAct agent engine:
 
-1. Create a new Space on Hugging Face and select **Docker** as the SDK.
-2. Push this repository to your Space.
-3. In Space Settings -> **Variables and Secrets**:
-   - Add Secret: `NVIDIA_API_KEY` (e.g. `nvapi-...`)
-   - Add Variable or Secret: `NVIDIA_MODEL` (`mistralai/mistral-nemotron`)
-   - Add Variable or Secret: `NVIDIA_API_URL` (`https://integrate.api.nvidia.com/v1`)
-4. The Space will automatically build using `Dockerfile` and serve on port `7860`.
+```bash
+pytest
+```
 
 ---
 
 ## ⚠️ Limitations & Disclaimers
 
-- **Statement Format Variability**: Bank statements vary significantly across institutions. While modular parsers cover standard table and text layouts, non-standard formats may require customized rules.
-- **OCR Quality**: Scanned PDF quality impacts OCR extraction accuracy.
+- **Statement Format Variability**: Bank statements vary significantly across institutions. Modular parsers cover standard table and text layouts.
 - **Financial Advice Disclaimer**: This application provides AI-assisted financial analysis and does not provide financial, legal, or lending advice.
 
 ---

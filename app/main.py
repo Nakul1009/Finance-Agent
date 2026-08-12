@@ -7,7 +7,7 @@ from fastapi import Request
 
 from app.core.config import settings
 from app.core.database import engine, Base, SessionLocal
-from app.api import health, documents, transactions, analytics, chat, reports
+from app.api import health, documents, transactions, analytics, chat, reports, agent
 from app.models.models import Document, Transaction
 from app.sample_data.demo_generator import generate_synthetic_transactions
 from app.categorization.rules import CategorizationRulesEngine
@@ -45,6 +45,8 @@ app.include_router(transactions.router, prefix=f"{settings.API_PREFIX}/transacti
 app.include_router(analytics.router, prefix=f"{settings.API_PREFIX}/analytics", tags=["Analytics"])
 app.include_router(chat.router, prefix=f"{settings.API_PREFIX}/chat", tags=["AI Assistant"])
 app.include_router(reports.router, prefix=f"{settings.API_PREFIX}/reports", tags=["Reports"])
+app.include_router(agent.router, prefix=f"{settings.API_PREFIX}/agent", tags=["AI Agent Console"])
+
 
 # Static files mounting for built frontend (HF Spaces)
 frontend_static_dir = os.path.join(os.path.dirname(__file__), "..", "static")

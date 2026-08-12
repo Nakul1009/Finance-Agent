@@ -7,6 +7,9 @@ class FinBankApp {
         this.transactions = [];
         this.documents = [];
         this.chatHistory = [];
+        this.agentAuditData = null;
+        this.simulationData = null;
+        this.selectedScenario = 'emergency_fund';
         this.filters = { search: '', category: '', type: '' };
         this.chartInstances = {};
 
@@ -146,6 +149,9 @@ class FinBankApp {
                 break;
             case 'assistant':
                 main.innerHTML = this.renderAssistantHTML();
+                break;
+            case 'agent':
+                main.innerHTML = this.renderAgentConsoleHTML();
                 break;
             case 'report':
                 main.innerHTML = this.renderReportHTML();
@@ -695,12 +701,40 @@ class FinBankApp {
         }
     }
 
+    renderExecutionTraceHTML(trace, tools) {
+        if (!trace || trace.length === 0) return '';
+        return `
+            <details class="mb-3 bg-slate-900 text-slate-200 rounded-lg p-3 border border-slate-800 text-[11px] font-mono shadow-sm">
+                <summary class="cursor-pointer font-semibold text-sky-400 flex items-center justify-between select-none">
+                    <span class="flex items-center gap-1.5"><i data-lucide="cpu" class="w-3.5 h-3.5 text-sky-400"></i> ReAct Agent Execution Trace (${trace.length} Steps)</span>
+                    <span class="text-[10px] bg-sky-950 text-sky-300 px-2 py-0.5 rounded border border-sky-800 font-sans">
+                        Tools: ${tools && tools.length ? tools.join(', ') : 'Rules Engine'}
+                    </span>
+                </summary>
+                <div class="mt-2.5 pt-2 border-t border-slate-800 space-y-1.5">
+                    ${trace.map(t => {
+                        let color = 'text-amber-400';
+                        if (t.action === 'PLAN') color = 'text-sky-400';
+                        else if (t.action === 'VERIFICATION') color = 'text-emerald-400';
+                        else if (t.action === 'SYNTHESIS') color = 'text-purple-400';
+                        return `
+                            <div class="flex items-start gap-2">
+                                <span class="${color} font-bold min-w-[75px]">[${t.action}]</span>
+                                <span class="text-slate-300 flex-1">${t.thought}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </details>
+        `;
+    }
+
     renderAssistantHTML() {
         return `
             <div class="max-w-3xl mx-auto space-y-4 flex flex-col h-[calc(100vh-140px)]">
                 <div>
-                    <h2 class="text-xl font-bold text-slate-900">AI Financial Assistant</h2>
-                    <p class="text-xs text-slate-500">Ask questions grounded strictly in your processed bank statement context</p>
+                    <h2 class="text-xl font-bold text-slate-900">AI Agent Financial Assistant</h2>
+                    <p class="text-xs text-slate-500">Autonomous ReAct reasoning loop with verifiable tool execution trace</p>
                 </div>
 
                 <!-- Quick Prompt Buttons -->
@@ -711,11 +745,11 @@ class FinBankApp {
                     <button onclick="app.sendAssistantMessage('What were my largest expenses?')" class="bg-white hover:bg-sky-50 text-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
                         💎 What were my largest expenses?
                     </button>
-                    <button onclick="app.sendAssistantMessage('What are my recurring payments?')" class="bg-white hover:bg-sky-50 text-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-                        🔄 What are my recurring payments?
+                    <button onclick="app.sendAssistantMessage('Audit my recurring subscriptions and money leaks')" class="bg-white hover:bg-sky-50 text-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
+                        🔍 Audit subscription traps
                     </button>
-                    <button onclick="app.sendAssistantMessage('Summarize my financial activity.')" class="bg-white hover:bg-sky-50 text-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
-                        📊 Summarize my financial activity
+                    <button onclick="app.sendAssistantMessage('Can I afford a ₹15,000 monthly loan EMI?')" class="bg-white hover:bg-sky-50 text-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm transition">
+                        🏦 Affordability test
                     </button>
                 </div>
 
@@ -724,15 +758,16 @@ class FinBankApp {
                     <div class="flex gap-3 items-start">
                         <div class="w-8 h-8 rounded-lg bg-sky-600 text-white flex items-center justify-center font-bold text-xs">AI</div>
                         <div class="bg-slate-100 p-3 rounded-xl rounded-tl-none text-xs text-slate-800 max-w-xl">
-                            Hello! I am your FinBank AI assistant. Ask me anything about your uploaded bank statement (e.g. food spending, top expenses, savings rate, recurring payments).
+                            Hello! I am your FinBank Autonomous AI Agent. Ask me financial queries or scenario questions — I will execute tools server-side and display my step-by-step reasoning trace.
                         </div>
                     </div>
 
                     ${this.chatHistory.map(m => `
                         <div class="flex gap-3 items-start ${m.role === 'user' ? 'justify-end' : ''}">
                             ${m.role === 'assistant' ? '<div class="w-8 h-8 rounded-lg bg-sky-600 text-white flex items-center justify-center font-bold text-xs">AI</div>' : ''}
-                            <div class="${m.role === 'user' ? 'bg-sky-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none'} p-3 rounded-xl text-xs max-w-xl">
-                                ${m.content.replace(/\n/g, '<br>')}
+                            <div class="${m.role === 'user' ? 'bg-sky-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none'} p-3.5 rounded-xl text-xs max-w-xl">
+                                ${m.role === 'assistant' ? this.renderExecutionTraceHTML(m.trace, m.tools) : ''}
+                                <div>${m.content.replace(/\n/g, '<br>')}</div>
                             </div>
                         </div>
                     `).join('')}
@@ -740,9 +775,9 @@ class FinBankApp {
 
                 <!-- Input Controls -->
                 <form onsubmit="app.handleChatSubmit(event)" class="flex gap-2">
-                    <input type="text" id="chat-input" placeholder="Type your financial question..." class="flex-1 text-xs border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 shadow-sm">
+                    <input type="text" id="chat-input" placeholder="Ask a question or request a financial simulation..." class="flex-1 text-xs border border-slate-200 rounded-lg p-3 focus:ring-2 focus:ring-sky-500 focus:border-sky-500 shadow-sm">
                     <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold px-5 rounded-lg transition shadow-sm flex items-center gap-1.5">
-                        <i data-lucide="send" class="w-4 h-4"></i> Send
+                        <i data-lucide="send" class="w-4 h-4"></i> Run Agent
                     </button>
                 </form>
             </div>
@@ -770,24 +805,253 @@ class FinBankApp {
         if (box) box.scrollTop = box.scrollHeight;
 
         try {
-            const res = await fetch(`${API_BASE}/chat`, {
+            const res = await fetch(`${API_BASE}/agent/chat`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: userMsg, history: this.chatHistory })
+                body: JSON.stringify({ message: userMsg, history: this.chatHistory.map(h => ({ role: h.role, content: h.content })) })
             });
 
             if (res.ok) {
                 const data = await res.json();
-                this.chatHistory.push({ role: 'assistant', content: data.reply });
+                this.chatHistory.push({
+                    role: 'assistant',
+                    content: data.reply,
+                    trace: data.execution_trace,
+                    tools: data.tools_used
+                });
             } else {
                 this.chatHistory.push({ role: 'assistant', content: 'Sorry, I failed to process your question.' });
             }
         } catch (e) {
-            this.chatHistory.push({ role: 'assistant', content: 'Network error communicating with AI service.' });
+            this.chatHistory.push({ role: 'assistant', content: 'Network error communicating with AI agent.' });
         } finally {
             this.render();
             const box = document.getElementById('chat-box');
             if (box) box.scrollTop = box.scrollHeight;
+        }
+    }
+
+    renderAgentConsoleHTML() {
+        const audit = this.agentAuditData;
+        const sim = this.simulationData;
+
+        return `
+            <div class="max-w-5xl mx-auto space-y-6">
+                <!-- Banner Header -->
+                <div class="bg-gradient-to-r from-slate-900 via-sky-950 to-slate-900 text-white rounded-xl p-6 shadow-md border border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="px-2 py-0.5 bg-sky-500/20 text-sky-300 text-[11px] font-bold rounded uppercase tracking-wider border border-sky-500/30">Autonomous Agent Console</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-white">Financial Audit & Scenario Intelligence</h2>
+                        <p class="text-xs text-slate-300">Run proactive multi-step money leak audits and goal simulation stress-tests</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="app.runAgentAudit()" id="btn-run-audit" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition shadow flex items-center gap-2">
+                            <i data-lucide="shield-search" class="w-4 h-4"></i> Run Autonomous Audit
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- SECTION 1: AUTONOMOUS FINANCIAL AUDIT -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5 flex flex-col">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="shield-alert" class="w-5 h-5 text-sky-600"></i>
+                                <h3 class="font-bold text-slate-900 text-base">Autonomous Financial Leak Audit</h3>
+                            </div>
+                            ${audit ? `<span class="text-xs font-bold px-2.5 py-1 rounded-full ${audit.risk_level === 'Low' ? 'bg-emerald-100 text-emerald-700' : audit.risk_level === 'Medium' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}">${audit.risk_level} Risk</span>` : ''}
+                        </div>
+
+                        ${!audit ? `
+                            <div class="text-center py-10 my-auto text-slate-400 space-y-3">
+                                <i data-lucide="radar" class="w-12 h-12 mx-auto text-slate-300 animate-pulse"></i>
+                                <p class="text-xs">No audit executed yet. Click <strong>"Run Autonomous Audit"</strong> to let the agent scan your statement for money leaks.</p>
+                            </div>
+                        ` : `
+                            <!-- Audit Score Cards -->
+                            <div class="grid grid-cols-3 gap-3 text-center">
+                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                    <span class="text-[11px] text-slate-500 uppercase font-semibold">Audit Score</span>
+                                    <div class="text-xl font-extrabold ${audit.audit_score >= 70 ? 'text-emerald-600' : 'text-amber-600'} mt-1">${audit.audit_score}/100</div>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                    <span class="text-[11px] text-slate-500 uppercase font-semibold">Leaks Found</span>
+                                    <div class="text-xl font-extrabold text-slate-900 mt-1">${audit.total_leaks_found}</div>
+                                </div>
+                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                    <span class="text-[11px] text-slate-500 uppercase font-semibold">Monthly Outflow Leak</span>
+                                    <div class="text-xl font-extrabold text-rose-600 mt-1">₹${audit.monthly_leak_total.toLocaleString('en-IN')}</div>
+                                </div>
+                            </div>
+
+                            <!-- Leak List -->
+                            <div class="space-y-2 flex-1 overflow-y-auto max-h-56 custom-scrollbar pr-1">
+                                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">Detected Financial Leaks</span>
+                                ${audit.financial_leaks.map(leak => `
+                                    <div class="p-3 bg-slate-50 hover:bg-sky-50/50 rounded-lg border border-slate-200/80 transition space-y-1">
+                                        <div class="flex justify-between items-center text-xs">
+                                            <span class="font-bold text-slate-800 flex items-center gap-1.5">
+                                                <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-500"></i> ${leak.title}
+                                            </span>
+                                            <span class="font-semibold text-rose-600">₹${leak.monthly_leak_amount.toLocaleString('en-IN')}/mo</span>
+                                        </div>
+                                        <p class="text-[11px] text-slate-500 leading-tight">${leak.description}</p>
+                                        <div class="text-[11px] font-medium text-sky-700 bg-sky-100/60 px-2 py-0.5 rounded inline-block mt-1">💡 Action: ${leak.action_item}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+
+                            <!-- Execution Trace -->
+                            ${this.renderExecutionTraceHTML(audit.execution_trace, ['tool_query_financial_metrics', 'tool_audit_recurring_subscriptions', 'tool_detect_anomalies'])}
+                        `}
+                    </div>
+
+                    <!-- SECTION 2: GOAL & SCENARIO SIMULATOR -->
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5 flex flex-col">
+                        <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="sliders" class="w-5 h-5 text-sky-600"></i>
+                                <h3 class="font-bold text-slate-900 text-base">"What-If" Scenario Simulator</h3>
+                            </div>
+                        </div>
+
+                        <!-- Simulator Inputs -->
+                        <form onsubmit="app.runGoalSimulation(event)" class="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Scenario Type</label>
+                                <select id="sim-scenario-type" onchange="app.selectedScenario = this.value; app.render();" class="w-full text-xs rounded-lg border-slate-300 border p-2.5 bg-white">
+                                    <option value="emergency_fund" ${this.selectedScenario === 'emergency_fund' ? 'selected' : ''}>🎯 Emergency Fund Goal</option>
+                                    <option value="loan_affordability" ${this.selectedScenario === 'loan_affordability' ? 'selected' : ''}>🏦 Loan EMI Affordability Test</option>
+                                    <option value="expense_reduction" ${this.selectedScenario === 'expense_reduction' ? 'selected' : ''}>✂️ Expense Reduction Strategy</option>
+                                </select>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3 text-xs">
+                                ${this.selectedScenario === 'emergency_fund' ? `
+                                    <div>
+                                        <label class="block font-medium text-slate-600 mb-1">Target Savings (₹)</label>
+                                        <input type="number" id="sim-target-amt" value="0" placeholder="0" class="w-full border rounded-lg p-2 bg-white text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block font-medium text-slate-600 mb-1">Timeframe (Months)</label>
+                                        <input type="number" id="sim-timeframe" value="0" placeholder="0" class="w-full border rounded-lg p-2 bg-white text-xs">
+                                    </div>
+                                ` : this.selectedScenario === 'loan_affordability' ? `
+                                    <div class="col-span-2">
+                                        <label class="block font-medium text-slate-600 mb-1">Proposed Monthly Loan EMI (₹)</label>
+                                        <input type="number" id="sim-monthly-emi" value="0" placeholder="0" class="w-full border rounded-lg p-2 bg-white text-xs">
+                                    </div>
+                                ` : `
+                                    <div class="col-span-2">
+                                        <label class="block font-medium text-slate-600 mb-1">Target Monthly Savings (₹)</label>
+                                        <input type="number" id="sim-target-amt" value="0" placeholder="0" class="w-full border rounded-lg p-2 bg-white text-xs">
+                                    </div>
+                                `}
+                            </div>
+
+                            <button type="submit" id="btn-run-sim" class="w-full bg-sky-600 hover:bg-sky-700 text-white text-xs font-semibold py-2.5 rounded-lg transition shadow-sm flex items-center justify-center gap-1.5">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i> Run Scenario Simulation
+                            </button>
+                        </form>
+
+                        <!-- Simulation Results -->
+                        ${!sim ? `
+                            <div class="text-center py-6 text-slate-400 text-xs my-auto">
+                                Configure target goal parameters and click <strong>"Run Scenario Simulation"</strong> to inspect recommendations.
+                            </div>
+                        ` : `
+                            <div class="space-y-3 flex-1 overflow-y-auto custom-scrollbar">
+                                <div class="p-3.5 rounded-lg border text-xs space-y-1 ${sim.feasible ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'}">
+                                    <div class="font-bold flex items-center gap-2">
+                                        <i data-lucide="${sim.feasible ? 'check-circle' : 'alert-circle'}" class="w-4 h-4"></i>
+                                        Status: ${sim.feasible ? 'Goal Achievable & Stress-Tested' : 'Requires Expense Adjustments'}
+                                    </div>
+                                    <p class="leading-relaxed text-[11px]">${sim.summary}</p>
+                                    <div class="text-[11px] font-semibold pt-1 border-t border-slate-200/60 mt-1">
+                                        🧪 Stress Test: ${sim.stress_test_result}
+                                    </div>
+                                </div>
+
+                                ${sim.recommended_cuts && sim.recommended_cuts.length > 0 ? `
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-2">Recommended Category Budget Trims</span>
+                                        <div class="space-y-1.5 text-xs">
+                                            ${sim.recommended_cuts.map(c => `
+                                                <div class="flex justify-between items-center p-2 bg-slate-50 rounded border border-slate-100 text-[11px]">
+                                                    <div>
+                                                        <span class="font-bold text-slate-800">${c.category}</span>
+                                                        <span class="text-slate-400 ml-1">(Cut ${c.proposed_cut_pct}%)</span>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <span class="font-bold text-emerald-600">+₹${c.monthly_savings.toLocaleString('en-IN')}/mo</span>
+                                                        <span class="text-slate-400 block text-[10px]">Target: ₹${c.target_budget.toLocaleString('en-IN')}/mo</span>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+
+                                ${this.renderExecutionTraceHTML(sim.execution_trace, ['tool_simulate_budget_scenario'])}
+                            </div>
+                        `}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async runAgentAudit() {
+        const btn = document.getElementById('btn-run-audit');
+        if (btn) btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Auditing...`;
+
+        try {
+            const res = await fetch(`${API_BASE}/agent/audit`, { method: 'POST' });
+            if (res.ok) {
+                this.agentAuditData = await res.json();
+            } else {
+                alert('Audit execution failed.');
+            }
+        } catch (e) {
+            alert('Network error executing audit.');
+        } finally {
+            this.render();
+        }
+    }
+
+    async runGoalSimulation(e) {
+        if (e) e.preventDefault();
+        const btn = document.getElementById('btn-run-sim');
+        if (btn) btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Simulating...`;
+
+        const type = document.getElementById('sim-scenario-type')?.value || 'emergency_fund';
+        const target = parseFloat(document.getElementById('sim-target-amt')?.value || 0);
+        const months = parseInt(document.getElementById('sim-timeframe')?.value || 0);
+        const emi = parseFloat(document.getElementById('sim-monthly-emi')?.value || 0);
+
+        try {
+            const res = await fetch(`${API_BASE}/agent/simulate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scenario_type: type,
+                    target_amount: target,
+                    time_frame_months: months,
+                    monthly_emi: emi
+                })
+            });
+
+            if (res.ok) {
+                this.simulationData = await res.json();
+            } else {
+                alert('Simulation failed.');
+            }
+        } catch (e) {
+            alert('Network error running simulation.');
+        } finally {
+            this.render();
         }
     }
 

@@ -113,3 +113,63 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     sources: Optional[List[Dict[str, Any]]] = None
+
+# AI Agent Schemas
+class ExecutionStep(BaseModel):
+    step_index: int
+    action: str # PLAN, TOOL_CALL, VERIFICATION, SYNTHESIS
+    tool_name: Optional[str] = None
+    tool_input: Optional[Dict[str, Any]] = None
+    tool_output: Optional[Dict[str, Any]] = None
+    thought: str
+
+class AgentChatRequest(BaseModel):
+    message: str
+    history: Optional[List[ChatMessage]] = []
+
+class AgentChatResponse(BaseModel):
+    reply: str
+    execution_trace: List[ExecutionStep]
+    tools_used: List[str]
+
+class FinancialLeakItem(BaseModel):
+    category: str
+    title: str
+    monthly_leak_amount: float
+    description: str
+    action_item: str
+
+class AgentAuditResponse(BaseModel):
+    audit_score: int # 0 to 100
+    risk_level: str # Low, Medium, High, Critical
+    total_leaks_found: int
+    monthly_leak_total: float
+    financial_leaks: List[FinancialLeakItem]
+    recommended_action_plan: List[str]
+    execution_trace: List[ExecutionStep]
+
+class SimulationRequest(BaseModel):
+    scenario_type: str # emergency_fund, loan_affordability, expense_reduction
+    target_amount: Optional[float] = 0.0
+    time_frame_months: Optional[int] = 0
+    monthly_emi: Optional[float] = 0.0
+
+class CategoryCutRecommendation(BaseModel):
+    category: str
+    current_spending: float
+    proposed_cut_pct: float
+    monthly_savings: float
+    target_budget: float
+
+class SimulationResponse(BaseModel):
+    scenario_type: str
+    feasible: bool
+    summary: str
+    baseline_net_monthly: float
+    simulated_net_monthly: float
+    baseline_savings_rate: float
+    simulated_savings_rate: float
+    recommended_cuts: List[CategoryCutRecommendation]
+    stress_test_result: str
+    execution_trace: List[ExecutionStep]
+

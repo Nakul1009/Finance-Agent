@@ -255,6 +255,7 @@ class FinancialAnalyticsEngine:
             "disclaimer": "AI-assisted financial analysis — not a lending decision."
         }
 
+    @staticmethod
     def _empty_analytics() -> Dict[str, Any]:
         return {
             "total_income": 0.0,
