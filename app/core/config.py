@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     
     # LLM Settings
     NVIDIA_API_KEY: str = os.getenv("NVIDIA_API_KEY", "")
-    NVIDIA_MODEL: str = os.getenv("NVIDIA_MODEL", "mistralai/mistral-nemotron")
+    NVIDIA_MODEL: str = os.getenv("NVIDIA_MODEL", "nvidia/nemotron-mini-4b-instruct")
     NVIDIA_API_URL: str = os.getenv("NVIDIA_API_URL", "https://integrate.api.nvidia.com/v1")
     
     # Storage Settings

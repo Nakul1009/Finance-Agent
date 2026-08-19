@@ -26,27 +26,37 @@ class LLMService:
             "Accept": "application/json"
         }
 
-        payload: Dict[str, Any] = {
-            "model": self.model,
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": 1024
-        }
-        if response_format_json:
-            payload["response_format"] = {"type": "json_object"}
+        # Candidate models list: primary model first, followed by fallbacks
+        models_to_try = [self.model]
+        if "nvidia/nemotron-mini-4b-instruct" not in models_to_try:
+            models_to_try.append("nvidia/nemotron-mini-4b-instruct")
+        if "nvidia/nemotron-3-nano-30b-a3b" not in models_to_try:
+            models_to_try.append("nvidia/nemotron-3-nano-30b-a3b")
 
-        try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                resp = await client.post(self.api_url, headers=headers, json=payload)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    choices = data.get("choices", [])
-                    if choices and len(choices) > 0:
-                        return choices[0].get("message", {}).get("content", "").strip()
-                else:
-                    logger.error(f"NVIDIA API Error [{resp.status_code}]: {resp.text}")
-        except Exception as e:
-            logger.error(f"Failed to communicate with NVIDIA Nemotron API: {e}")
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            for m in models_to_try:
+                payload: Dict[str, Any] = {
+                    "model": m,
+                    "messages": messages,
+                    "temperature": temperature,
+                    "max_tokens": 1024
+                }
+                if response_format_json:
+                    payload["response_format"] = {"type": "json_object"}
+
+                try:
+                    resp = await client.post(self.api_url, headers=headers, json=payload)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        choices = data.get("choices", [])
+                        if choices and len(choices) > 0:
+                            content = choices[0].get("message", {}).get("content", "").strip()
+                            if content:
+                                return content
+                    else:
+                        logger.warning(f"NVIDIA API model '{m}' returned [{resp.status_code}]: {resp.text}")
+                except Exception as e:
+                    logger.warning(f"Failed NVIDIA API call for model '{m}': {e}")
 
         return None
 
